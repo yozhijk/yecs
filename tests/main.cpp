@@ -26,6 +26,21 @@ int main()
     position.x     = 100;
     position.y     = 100;
 
+    struct TestSystem : public System
+    {
+        void Run(SystemInput& input) override
+        {
+            // auto& positions  = input.read.Get<Position>();
+            // auto& velocities = input.write.Get<Velocity>();
+
+            auto entities = input.query_entities();
+            entities.FilterInPlace([](Entity e) { return true; });
+        }
+    };
+
+    world.RegisterSystem<TestSystem>(ComponentTypesBuilder<Velocity, Position>().Build(),
+                                     ComponentTypesBuilder<Position>().Build());
+
     world.DestroyEntity(entity);
     return 0;
 }

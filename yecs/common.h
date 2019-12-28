@@ -27,6 +27,7 @@ SOFTWARE.
 #include <numeric>
 #include <typeindex>
 #include <typeinfo>
+#include <vector>
 
 namespace yecs
 {
@@ -37,6 +38,7 @@ using std::size_t;
 using std::uint32_t;
 using Entity         = uint32_t;
 using ComponentIndex = size_t;
+using ComponentTypes = std::vector<std::type_index>;
 
 template <typename T>
 inline auto GetTypeIndex()

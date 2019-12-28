@@ -1,19 +1,26 @@
-add_library(yecs-include INTERFACE)
-
-target_compile_features(yecs-include INTERFACE cxx_std_17)
-
-set(YECS_INCLUDE_SOURCES
+add_library(yecs-lib STATIC
     common.h
     component_collection.h
+    component_types_builder.h
+    entity_set.h
+    entity_query.h
+    entity_query.cc
     system.h
     world.h
+    world.cc
     yecs.h
 )
 
-# trick to show files in the dedicated Visual Studio project
-if(MSVC)
-    add_custom_target(yecs-include-sources SOURCES
-        ${YECS_INCLUDE_SOURCES}
-    )
-endif()
+target_compile_features(yecs-lib PRIVATE cxx_std_17)
+
+target_include_directories(yecs-lib PRIVATE
+    ${PROJECT_SOURCE_DIR}
+)
+
+if(WIN32)
+    target_compile_options(yecs-lib PRIVATE /WX)
+elseif(UNIX)
+    target_compile_options(yecs-lib PRIVATE -Wall -Werror)
+endif(WIN32)
+
 

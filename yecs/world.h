@@ -33,41 +33,13 @@ SOFTWARE.
 
 #include "yecs/common.h"
 #include "yecs/component_collection.h"
+#include "yecs/component_types_builder.h"
+#include "yecs/entity_query.h"
+#include "yecs/entity_set.h"
 #include "yecs/system.h"
 
 namespace yecs
 {
-/** \brief Helper class for easier entities construction.
- *
- * World returns entity builder as a result of CreateEntity method, which
- * conviniently allows to chain calls, like CreateEntity().AddComponent<Physics>().AddComponent<Graphics>().Build();
- **/
-class EntityBuilder
-{
-public:
-    // Copying is forbidden.
-    EntityBuilder(EntityBuilder&) = delete;
-    EntityBuilder& operator=(EntityBuilder&) = delete;
-
-    // Add component of a given type.
-    template <typename ComponentT>
-    EntityBuilder& AddComponent();
-
-    // Build entity (return its id).
-    Entity Build() const { return entity_; }
-
-private:
-    // Only World can create entity builders.
-    EntityBuilder(Entity entity, World& world) : entity_(entity), world_(world) {}
-
-    // Entity of interest.
-    Entity entity_ = kInvalidEntity;
-    // Reference to world to add components.
-    World& world_;
-
-    friend class World;
-};
-
 /** \brief Provides primary ECS interface for clients.
  *
  * World is a host for all ECS data and provides an interface to all ECS clients.
@@ -80,6 +52,38 @@ private:
 class World
 {
 public:
+    /** \brief Helper class for easier entities construction.
+     *
+     * World returns entity builder as a result of CreateEntity method, which
+     * conviniently allows to chain calls, like CreateEntity().AddComponent<Physics>().AddComponent<Graphics>().Build();
+     **/
+    class EntityBuilder
+    {
+    public:
+        // Copying is forbidden.
+        EntityBuilder(EntityBuilder&) = delete;
+        EntityBuilder& operator=(EntityBuilder&) = delete;
+
+        // Add component of a given type.
+        template <typename ComponentT>
+        EntityBuilder& AddComponent();
+
+        // Build entity (return its id).
+        Entity Build() const { return entity_; }
+
+    private:
+        // Only World can create entity builders.
+        EntityBuilder(Entity entity, World& world) : entity_(entity), world_(world) {}
+
+        // Entity of interest.
+        Entity entity_ = kInvalidEntity;
+        // Reference to world to add components.
+        World& world_;
+
+        friend class World;
+    };
+
+public:
     World()  = default;
     ~World() = default;
 
@@ -90,7 +94,7 @@ public:
 
     // Register a system.
     template <typename SystemT, typename... Args>
-    void RegisterSystem(Args&&... args);
+    void RegisterSystem(ComponentTypes&& read, ComponentTypes&& write, Args&&... args);
 
     /** \brief Create new entity.
      *  Method returns a builder instance, allowing to chain calls adding components.*/
@@ -111,6 +115,17 @@ public:
     template <typename ComponentT>
     bool HasComponent(Entity entity) const;
 
+    // Get number of components of specified type.
+    template <typename ComponentT>
+    size_t GetNumComponents() const;
+
+    // Direct access to components.
+    template <typename ComponentT>
+    ComponentT& GetComponentByIndex(ComponentIndex index);
+
+    template <typename ComponentT>
+    const ComponentT& GetComponentByIndex(ComponentIndex index) const;
+
     // Run systems.
     void Run();
 
@@ -119,17 +134,37 @@ public:
 
 private:
     // Each time entity space is out, we extend an array by this number of elements.
-    static constexpr std::uint32_t kEntitySizeIncrement = 128;
+    static constexpr uint32_t kEntitySizeIncrement = 128;
+
+    // System data.
+    struct SystemDesc
+    {
+        ComponentTypes          read;
+        ComponentTypes          write;
+        std::unique_ptr<System> system;
+
+        SystemDesc(ComponentTypes&& r, ComponentTypes&& w, std::unique_ptr<System>&& s)
+            : read{std::move(r)}, write{std::move(w)}, system{std::move(s)}
+        {
+        }
+    };
+
+    using ComponetsBase = ComponentCollectionBase;
+    template <typename T>
+    using Components    = ComponentCollection<T>;
+    using ComponentsMap = std::unordered_map<std::type_index, std::unique_ptr<ComponentCollectionBase>>;
 
     // Entity array: true if entity exists, false if not.
     std::mutex        entity_mutex_;
     std::vector<bool> entities_;
     // Component arrays.
-    std::mutex                                                                    component_mutex_;
-    std::unordered_map<std::type_index, std::unique_ptr<ComponentCollectionBase>> components_;
+    std::mutex    component_mutex_;
+    ComponentsMap components_;
     // Systems.
-    std::mutex                           system_mutex_;
-    std::vector<std::unique_ptr<System>> systems_;
+    std::mutex              system_mutex_;
+    std::vector<SystemDesc> systems_;
+
+    friend class EntityQuery;
 };
 
 template <typename ComponentT>
@@ -138,10 +173,7 @@ inline void World::RegisterComponent()
     std::lock_guard<std::mutex> lock(component_mutex_);
 
     auto index = GetTypeIndex<ComponentT>();
-    if (components_.find(index) != components_.cend())
-    {
-        throw std::runtime_error("ECSManager: Component type already registered");
-    }
+    assert(components_.find(index) == components_.cend());
 
     components_.emplace(index, std::make_unique<ComponentCollection<ComponentT>>());
 }
@@ -152,12 +184,9 @@ inline ComponentT& World::AddComponent(Entity entity)
     std::lock_guard<std::mutex> lock(component_mutex_);
 
     auto index = GetTypeIndex<ComponentT>();
-    if (components_.find(index) == components_.cend())
-    {
-        throw std::runtime_error("ECSManager: Component type not registered");
-    }
+    assert(components_.find(index) != components_.cend());
 
-    auto collection = static_cast<ComponentCollection<ComponentT>*>(components_[index].get());
+    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
     return collection->AddComponent(entity);
 }
 
@@ -165,88 +194,55 @@ template <typename ComponentT>
 inline ComponentT& World::GetComponent(Entity entity)
 {
     auto index = GetTypeIndex<ComponentT>();
-    if (components_.find(index) == components_.cend())
-    {
-        throw std::runtime_error("ECSManager: Component type not registered");
-    }
+    assert(components_.find(index) != components_.cend());
 
-    auto collection = static_cast<ComponentCollection<ComponentT>*>(components_[index].get());
+    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
     return collection->GetComponent(entity);
 }
 
-template <typename SystemT, typename... Args>
-inline void World::RegisterSystem(Args&&... args)
+// Direct component access.
+template <typename ComponentT>
+size_t World::GetNumComponents() const
 {
-    std::lock_guard<std::mutex> lock(system_mutex_);
+    auto index = GetTypeIndex<ComponentT>();
+    assert(components_.find(index) != components_.cend());
 
-    systems_.push_back(std::make_unique<SystemT>(std::forward<Args>(args)...));
-}
-
-void World::Run()
-{
-    for (auto& system : systems_) { system->Run(*this); }
-}
-
-void World::Reset()
-{
-    entities_.clear();
-    components_.clear();
-    systems_.clear();
-}
-
-EntityBuilder World::CreateEntity()
-{
-    std::lock_guard<std::mutex> lock(entity_mutex_);
-
-    auto id = kInvalidEntity;
-
-    // Look for free entity in an existing array.
-    for (auto i = 0; i < entities_.size(); ++i)
-    {
-        if (!entities_[i])
-        {
-            id = i;
-        }
-    }
-
-    // If it is full, resize and add new entities.
-    if (id == kInvalidEntity)
-    {
-        // Add one entity at the end.
-        auto old_size = entities_.size();
-        id            = old_size;
-
-        // Set added elements to false (no entity).
-        entities_.resize(old_size + kEntitySizeIncrement);
-        std::fill(entities_.begin() + old_size, entities_.end(), false);
-    }
-
-    // Mark entity as existing.
-    entities_[id] = true;
-    return EntityBuilder(id, *this);
-}
-
-void World::DestroyEntity(Entity entity)
-{
-    std::lock_guard<std::mutex> component_lock(component_mutex_);
-    std::lock_guard<std::mutex> entity_lock(entity_mutex_);
-
-    for (auto& components : components_)
-    {
-        if (components.second->HasComponent(entity))
-        {
-            components.second->RemoveComponent(entity);
-        }
-    }
-
-    entities_[entity] = false;
+    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
+    return collection->size();
 }
 
 template <typename ComponentT>
-inline EntityBuilder& EntityBuilder::AddComponent()
+ComponentT& World::GetComponentByIndex(ComponentIndex i)
+{
+    auto index = GetTypeIndex<ComponentT>();
+    assert(components_.find(index) != components_.cend());
+
+    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
+    return collection[i];
+}
+
+template <typename ComponentT>
+const ComponentT& World::GetComponentByIndex(ComponentIndex i) const
+{
+    auto index = GetTypeIndex<ComponentT>();
+    assert(components_.find(index) != components_.cend());
+
+    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
+    return collection[i];
+}
+
+template <typename SystemT, typename... Args>
+inline void World::RegisterSystem(ComponentTypes&& read, ComponentTypes&& write, Args&&... args)
+{
+    std::lock_guard<std::mutex> lock(system_mutex_);
+
+    systems_.emplace_back(std::move(read), std::move(write), std::make_unique<SystemT>(std::forward<Args>(args)...));
+}
+
+template <typename ComponentT>
+inline World::EntityBuilder& World::EntityBuilder::AddComponent()
 {
     world_.AddComponent<ComponentT>(entity_);
     return *this;
 }
-
 }  // namespace yecs

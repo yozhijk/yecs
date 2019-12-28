@@ -84,7 +84,7 @@ public:
     T&       GetComponent(Entity entity);
     const T& GetComponent(Entity entity) const;
 
-    // Add a component to the entity.
+    // Add a component to an entity.
     T& AddComponent(Entity entity);
 
     // Access component by index.
@@ -182,14 +182,14 @@ inline void ComponentCollection<T>::RemoveComponent(Entity entity)
 
     if (components_.size() > 1)
     {
-        ComponentIndex lastIndex = components_.size() - 1;
-        ComponentIndex index     = component_index_[entity];
+        ComponentIndex last_index = components_.size() - 1;
+        ComponentIndex index      = component_index_[entity];
 
-        std::swap(components_[index], components_[lastIndex]);
+        std::swap(components_[index], components_[last_index]);
 
         for (auto& ci : component_index_)
         {
-            if (ci.second == lastIndex)
+            if (ci.second == last_index)
             {
                 ci.second = index;
                 break;

@@ -15,5 +15,5 @@ target_include_directories(tests PRIVATE
 )
 
 target_link_libraries(tests PRIVATE 
-    yecs-include
+    yecs-lib
 )

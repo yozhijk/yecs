@@ -24,36 +24,22 @@ SOFTWARE.
 #pragma once
 
 #include "yecs/common.h"
-#include "yecs/component_collection.h"
-#include "yecs/entity_query.h"
+#include "yecs/entity_set.h"
 
 namespace yecs
 {
-class ComponentAccess
+class World;
+class EntityQuery
 {
 public:
-    template <typename ComponentT>
-    ComponentCollection<ComponentT>& Get()
-    {
-    }
+    explicit EntityQuery(World& world);
 
-    template <typename ComponentT>
-    const ComponentCollection<ComponentT>& Get() const
-    {
-    }
-};
+    EntityQuery(const EntityQuery&) = delete;
+    EntityQuery operator=(const EntityQuery&) = delete;
 
-struct SystemInput
-{
-    const ComponentAccess& read;
-    ComponentAccess&       write;
-    EntityQuery&           query_entities;
-};
+    EntitySet operator()() const;
 
-class System
-{
-public:
-    virtual ~System()                    = default;
-    virtual void Run(SystemInput& input) = 0;
+private:
+    World& world_;
 };
 }  // namespace yecs
