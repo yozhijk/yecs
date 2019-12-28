@@ -94,7 +94,7 @@ public:
 
     // Register a system.
     template <typename SystemT, typename... Args>
-    void RegisterSystem(ComponentTypes&& read, ComponentTypes&& write, Args&&... args);
+    void RegisterSystem(Args&&... args);
 
     /** \brief Create new entity.
      *  Method returns a builder instance, allowing to chain calls adding components.*/
@@ -133,21 +133,11 @@ public:
     void Reset();
 
 private:
+    template <typename ComponentT>
+    auto& GetComponentCollection();
+
     // Each time entity space is out, we extend an array by this number of elements.
     static constexpr uint32_t kEntitySizeIncrement = 128;
-
-    // System data.
-    struct SystemDesc
-    {
-        ComponentTypes          read;
-        ComponentTypes          write;
-        std::unique_ptr<System> system;
-
-        SystemDesc(ComponentTypes&& r, ComponentTypes&& w, std::unique_ptr<System>&& s)
-            : read{std::move(r)}, write{std::move(w)}, system{std::move(s)}
-        {
-        }
-    };
 
     using ComponetsBase = ComponentCollectionBase;
     template <typename T>
@@ -161,11 +151,39 @@ private:
     std::mutex    component_mutex_;
     ComponentsMap components_;
     // Systems.
-    std::mutex              system_mutex_;
-    std::vector<SystemDesc> systems_;
+    std::mutex                           system_mutex_;
+    std::vector<std::unique_ptr<System>> systems_;
 
     friend class EntityQuery;
+    friend class ComponentAccess;
 };
+
+class ComponentAccess
+{
+public:
+    template <typename ComponentT>
+    ComponentCollection<ComponentT>& Write();
+
+    template <typename ComponentT>
+    const ComponentCollection<ComponentT>& Read() const;
+
+private:
+    explicit ComponentAccess(World& world);
+
+    World& world_;
+
+    friend class World;
+};
+
+template <typename ComponentT>
+inline auto& World::GetComponentCollection()
+{
+    auto index = GetTypeIndex<ComponentT>();
+    assert(components_.find(index) != components_.cend());
+
+    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
+    return *collection;
+}
 
 template <typename ComponentT>
 inline void World::RegisterComponent()
@@ -183,60 +201,42 @@ inline ComponentT& World::AddComponent(Entity entity)
 {
     std::lock_guard<std::mutex> lock(component_mutex_);
 
-    auto index = GetTypeIndex<ComponentT>();
-    assert(components_.find(index) != components_.cend());
-
-    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
-    return collection->AddComponent(entity);
+    return GetComponentCollection<ComponentT>().AddComponent(entity);
 }
 
 template <typename ComponentT>
 inline ComponentT& World::GetComponent(Entity entity)
 {
-    auto index = GetTypeIndex<ComponentT>();
-    assert(components_.find(index) != components_.cend());
-
-    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
-    return collection->GetComponent(entity);
+    return GetComponentCollection<ComponentT>().GetComponent(entity);
 }
 
 // Direct component access.
 template <typename ComponentT>
 size_t World::GetNumComponents() const
 {
-    auto index = GetTypeIndex<ComponentT>();
-    assert(components_.find(index) != components_.cend());
-
-    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
-    return collection->size();
+    return GetComponentCollection<ComponentT>().size();
 }
 
 template <typename ComponentT>
 ComponentT& World::GetComponentByIndex(ComponentIndex i)
 {
-    auto index = GetTypeIndex<ComponentT>();
-    assert(components_.find(index) != components_.cend());
-
-    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
-    return collection[i];
+    return GetComponentCollection<ComponentT>()[i];
 }
 
 template <typename ComponentT>
 const ComponentT& World::GetComponentByIndex(ComponentIndex i) const
 {
-    auto index = GetTypeIndex<ComponentT>();
-    assert(components_.find(index) != components_.cend());
-
-    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
-    return collection[i];
+    return GetComponentCollection<ComponentT>()[i];
 }
 
 template <typename SystemT, typename... Args>
-inline void World::RegisterSystem(ComponentTypes&& read, ComponentTypes&& write, Args&&... args)
+inline void World::RegisterSystem(Args&&... args)
 {
     std::lock_guard<std::mutex> lock(system_mutex_);
 
-    systems_.emplace_back(std::move(read), std::move(write), std::make_unique<SystemT>(std::forward<Args>(args)...));
+    auto system = std::make_unique<SystemT>(std::forward<Args>(args)...);
+
+    systems_.emplace_back(std::move(system));
 }
 
 template <typename ComponentT>
@@ -244,5 +244,19 @@ inline World::EntityBuilder& World::EntityBuilder::AddComponent()
 {
     world_.AddComponent<ComponentT>(entity_);
     return *this;
+}
+
+inline ComponentAccess::ComponentAccess(World& world) : world_(world) {}
+
+template <typename ComponentT>
+inline ComponentCollection<ComponentT>& ComponentAccess::Write()
+{
+    return world_.GetComponentCollection<ComponentT>();
+}
+
+template <typename ComponentT>
+inline const ComponentCollection<ComponentT>& ComponentAccess::Read() const
+{
+    return world_.GetComponentCollection<ComponentT>();
 }
 }  // namespace yecs

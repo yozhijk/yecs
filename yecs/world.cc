@@ -6,11 +6,10 @@ void World::Run()
 {
     for (auto& system : systems_)
     {
-        ComponentAccess read;
-        ComponentAccess write;
+        ComponentAccess access(*this);
         EntityQuery     query(*this);
-        SystemInput     input{read, write, query};
-        system.system->Run(input);
+
+        system->Run(access, query);
     }
 }
 

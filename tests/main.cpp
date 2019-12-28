@@ -28,18 +28,21 @@ int main()
 
     struct TestSystem : public System
     {
-        void Run(SystemInput& input) override
+        void Run(ComponentAccess& access, EntityQuery& entity_query) override
         {
-            // auto& positions  = input.read.Get<Position>();
-            // auto& velocities = input.write.Get<Velocity>();
+            auto& positions  = access.Read<Velocity>();
+            auto& velocities = access.Write<Position>();
 
-            auto entities = input.query_entities();
-            entities.FilterInPlace([](Entity e) { return true; });
+            // auto entities = entity_query();
+            // entities.FilterInPlace([](Entity e) { return true; });
+
+            std::cout << "Positions size: " << positions.size() << "\n";
+            std::cout << "Velocities size: " << velocities.size() << "\n";
         }
     };
 
-    world.RegisterSystem<TestSystem>(ComponentTypesBuilder<Velocity, Position>().Build(),
-                                     ComponentTypesBuilder<Position>().Build());
+    world.RegisterSystem<TestSystem>();
+    world.Run();
 
     world.DestroyEntity(entity);
     return 0;
