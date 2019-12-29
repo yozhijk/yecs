@@ -26,3 +26,16 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_subdirectory(yecs)
 add_subdirectory(tests)
 
+set(gtest_force_shared_crt ON CACHE BOOL "Use /MD and /MDd" FORCE)
+add_subdirectory(third_party/gtest)
+
+set(THIRD_PARTY_TARGETS
+    gtest
+    gtest_main
+    gmock
+    gmock_main
+)
+
+foreach(TGT ${THIRD_PARTY_TARGETS})
+    set_property(TARGET ${TGT} PROPERTY FOLDER "third_party")
+endforeach()

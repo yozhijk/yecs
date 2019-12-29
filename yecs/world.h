@@ -143,6 +143,7 @@ private:
     template <typename T>
     using Components    = ComponentCollection<T>;
     using ComponentsMap = std::unordered_map<std::type_index, std::unique_ptr<ComponentCollectionBase>>;
+    using SystemsMap    = std::unordered_map<std::type_index, std::unique_ptr<System>>;
 
     // Entity array: true if entity exists, false if not.
     std::mutex        entity_mutex_;
@@ -151,8 +152,8 @@ private:
     std::mutex    component_mutex_;
     ComponentsMap components_;
     // Systems.
-    std::mutex                           system_mutex_;
-    std::vector<std::unique_ptr<System>> systems_;
+    std::mutex system_mutex_;
+    SystemsMap systems_;
 
     friend class EntityQuery;
     friend class ComponentAccess;
@@ -191,7 +192,10 @@ inline void World::RegisterComponent()
     std::lock_guard<std::mutex> lock(component_mutex_);
 
     auto index = GetTypeIndex<ComponentT>();
-    assert(components_.find(index) == components_.cend());
+    if (components_.find(index) != components_.cend())
+    {
+        throw std::runtime_error("World: component type already registered.");
+    }
 
     components_.emplace(index, std::make_unique<ComponentCollection<ComponentT>>());
 }
@@ -234,9 +238,16 @@ inline void World::RegisterSystem(Args&&... args)
 {
     std::lock_guard<std::mutex> lock(system_mutex_);
 
+    auto index = GetTypeIndex<SystemT>();
+
+    if (systems_.find(index) != systems_.cend())
+    {
+        throw std::runtime_error("World: system type already registered");
+    }
+
     auto system = std::make_unique<SystemT>(std::forward<Args>(args)...);
 
-    systems_.emplace_back(std::move(system));
+    systems_.emplace(index, std::move(system));
 }
 
 template <typename ComponentT>

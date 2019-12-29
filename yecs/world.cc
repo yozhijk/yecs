@@ -9,7 +9,7 @@ void World::Run()
         ComponentAccess access(*this);
         EntityQuery     query(*this);
 
-        system->Run(access, query);
+        system.second->Run(access, query);
     }
 }
 

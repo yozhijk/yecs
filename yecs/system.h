@@ -33,7 +33,10 @@ class ComponentAccess;
 class System
 {
 public:
-    virtual ~System()                                                    = default;
+    virtual ~System() = default;
+
+    //  TODO: components access triggers a search in a components hash table every time
+    // Read or Write is called, collection refs cannot be cached atm, need to optimize.
     virtual void Run(ComponentAccess& access, EntityQuery& entity_query) = 0;
 };
 }  // namespace yecs

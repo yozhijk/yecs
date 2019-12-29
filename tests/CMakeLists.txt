@@ -1,5 +1,6 @@
 add_executable(tests
     main.cpp
+    tests.h
 )
 
 target_compile_features(tests PRIVATE cxx_std_17)
@@ -16,4 +17,5 @@ target_include_directories(tests PRIVATE
 
 target_link_libraries(tests PRIVATE 
     yecs-lib
+    gtest
 )
