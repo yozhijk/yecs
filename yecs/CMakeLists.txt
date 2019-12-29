@@ -23,4 +23,6 @@ elseif(UNIX)
     target_compile_options(yecs-lib PRIVATE -Wall -Werror)
 endif(WIN32)
 
+target_link_libraries(yecs-lib PRIVATE Cpp-Taskflow)
+
 

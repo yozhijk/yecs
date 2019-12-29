@@ -4,13 +4,8 @@ namespace yecs
 {
 void World::Run()
 {
-    for (auto& system : systems_)
-    {
-        ComponentAccess access(*this);
-        EntityQuery     query(*this);
-
-        system.second->Run(access, query);
-    }
+    executor_.run(taskflow_);
+    executor_.wait_for_all();
 }
 
 void World::Reset()

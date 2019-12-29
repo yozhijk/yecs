@@ -31,6 +31,7 @@ SOFTWARE.
 #include <unordered_map>
 #include <vector>
 
+#include "third_party/cpp-taskflow/taskflow/taskflow.hpp"
 #include "yecs/common.h"
 #include "yecs/component_collection.h"
 #include "yecs/component_types_builder.h"
@@ -96,6 +97,10 @@ public:
     template <typename SystemT, typename... Args>
     void RegisterSystem(Args&&... args);
 
+    // Set system execution ordering: execute System0 before System1.
+    template <typename SystemT0, typename SystemT1>
+    void Precede();
+
     /** \brief Create new entity.
      *  Method returns a builder instance, allowing to chain calls adding components.*/
     EntityBuilder CreateEntity();
@@ -139,11 +144,18 @@ private:
     // Each time entity space is out, we extend an array by this number of elements.
     static constexpr uint32_t kEntitySizeIncrement = 128;
 
+    // Data associated with a system.
+    struct SystemInvoke
+    {
+        tf::Task                task;
+        std::unique_ptr<System> system;
+    };
+
     using ComponetsBase = ComponentCollectionBase;
     template <typename T>
     using Components    = ComponentCollection<T>;
     using ComponentsMap = std::unordered_map<std::type_index, std::unique_ptr<ComponentCollectionBase>>;
-    using SystemsMap    = std::unordered_map<std::type_index, std::unique_ptr<System>>;
+    using SystemsMap    = std::unordered_map<std::type_index, SystemInvoke>;
 
     // Entity array: true if entity exists, false if not.
     std::mutex        entity_mutex_;
@@ -154,6 +166,10 @@ private:
     // Systems.
     std::mutex system_mutex_;
     SystemsMap systems_;
+
+    // Task flow stuff.
+    tf::Taskflow taskflow_;
+    tf::Executor executor_;
 
     friend class EntityQuery;
     friend class ComponentAccess;
@@ -247,7 +263,16 @@ inline void World::RegisterSystem(Args&&... args)
 
     auto system = std::make_unique<SystemT>(std::forward<Args>(args)...);
 
-    systems_.emplace(index, std::move(system));
+    SystemInvoke invoke;
+    invoke.system = std::make_unique<SystemT>(std::forward<Args>(args)...);
+    invoke.task   = taskflow_.emplace([system = invoke.system.get(), this]() {
+        ComponentAccess access(*this);
+        EntityQuery     query(*this);
+
+        system->Run(access, query);
+    });
+
+    systems_.emplace(index, std::move(invoke));
 }
 
 template <typename ComponentT>
@@ -269,5 +294,22 @@ template <typename ComponentT>
 inline const ComponentCollection<ComponentT>& ComponentAccess::Read() const
 {
     return world_.GetComponentCollection<ComponentT>();
+}
+
+template <typename SystemT0, typename SystemT1>
+inline void World::Precede()
+{
+    auto index0 = GetTypeIndex<SystemT0>();
+    auto index1 = GetTypeIndex<SystemT1>();
+
+    auto system0 = systems_.find(index0);
+    auto system1 = systems_.find(index1);
+
+    if (system0 == systems_.cend() || system1 == systems_.cend())
+    {
+        throw std::runtime_error("World: system type not found");
+    }
+
+    system0.second.task.Precede(system1.second.task);
 }
 }  // namespace yecs
