@@ -23,7 +23,8 @@ SOFTWARE.
 ****************************************************************************/
 #pragma once
 
-#include <assert>
+#include <assert.h>
+
 #include <memory>
 #include <mutex>
 #include <stdexcept>
