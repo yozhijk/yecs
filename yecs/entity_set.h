@@ -23,6 +23,8 @@ SOFTWARE.
 ****************************************************************************/
 #pragma once
 
+#include <algorithm>
+
 #include "yecs/common.h"
 
 namespace yecs

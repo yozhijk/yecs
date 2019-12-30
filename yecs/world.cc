@@ -22,7 +22,7 @@ World::EntityBuilder World::CreateEntity()
     auto id = kInvalidEntity;
 
     // Look for free entity in an existing array.
-    for (auto i = 0; i < entities_.size(); ++i)
+    for (size_t i = 0; i < entities_.size(); ++i)
     {
         if (!entities_[i])
         {
