@@ -23,6 +23,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Allow IDE's to group targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  # using Clang
+  add_compile_options("-stdlib=libc++")
+endif()
+
 add_subdirectory(yecs)
 add_subdirectory(tests)
 
