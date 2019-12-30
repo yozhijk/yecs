@@ -23,7 +23,7 @@ SOFTWARE.
 ****************************************************************************/
 #pragma once
 
-#include <cassert>
+#include <assert>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
