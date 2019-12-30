@@ -30,10 +30,15 @@ SOFTWARE.
 
 namespace yecs
 {
-class ComponentCollectionBase
+/** \brief Component storage interface.
+ *
+ * This class is mainly used for type erasure at this point, since DenseComponentStorage is
+ * hardcoded in many places, but might be useful for different component implementations in the future.
+ **/
+class ComponentStorageBase
 {
 public:
-    virtual ~ComponentCollectionBase() = 0;
+    virtual ~ComponentStorageBase() = 0;
 
     // Collection size
     virtual size_t size() const = 0;
@@ -41,28 +46,26 @@ public:
     // True if entity has a component in this collection
     virtual bool HasComponent(Entity entity) const = 0;
 
-    // Create component.
-    virtual ComponentIndex CreateComponent() = 0;
-
     // Remove component from entity.
     virtual void RemoveComponent(Entity entity) = 0;
-
-    // Set component by index.
-    virtual void SetComponent(Entity entity, ComponentIndex index) = 0;
 };
 
+/** \brief Component storage storing entities in a dense array.
+ *
+ * Components are stored in dense array and hash map is being used for entity to component mapping.
+ **/
 template <typename T>
-class ComponentCollection : public ComponentCollectionBase
+class DenseComponentStorage : public ComponentStorageBase
 {
 public:
-    ComponentCollection()           = default;
-    ~ComponentCollection() override = default;
+    DenseComponentStorage()           = default;
+    ~DenseComponentStorage() override = default;
 
-    ComponentCollection(const ComponentCollection&) = delete;
-    ComponentCollection& operator=(const ComponentCollection&) = delete;
+    DenseComponentStorage(const DenseComponentStorage&) = delete;
+    DenseComponentStorage& operator=(const DenseComponentStorage&) = delete;
 
-    ComponentCollection(ComponentCollection&&);
-    ComponentCollection&& operator=(ComponentCollection&&);
+    DenseComponentStorage(DenseComponentStorage&&);
+    DenseComponentStorage&& operator=(DenseComponentStorage&&);
 
     // Get collection size.
     size_t size() const override { return components_.size(); }
@@ -70,14 +73,8 @@ public:
     // True if entity has a component in this collection.
     bool HasComponent(Entity entity) const override;
 
-    // Create component and return its index.
-    ComponentIndex CreateComponent() override;
-
     // Remove component from entity.
     void RemoveComponent(Entity entity) override;
-
-    // Set component by index.
-    void SetComponent(Entity entity, ComponentIndex index) override;
 
     // Get component for entity, throws std::runtime_error if
     // HasComponent(entity) == false.
@@ -96,29 +93,29 @@ private:
     std::vector<T>                             components_;
 };
 
-inline ComponentCollectionBase::~ComponentCollectionBase() {}
+inline ComponentStorageBase::~ComponentStorageBase() {}
 
 template <typename T>
-inline ComponentCollection<T>::ComponentCollection(ComponentCollection&& rhs)
+inline DenseComponentStorage<T>::DenseComponentStorage(DenseComponentStorage&& rhs)
     : component_index_(std::move(rhs.component_index_)), components_(std::move(rhs.components_))
 {
 }
 
 template <typename T>
-inline ComponentCollection<T>&& ComponentCollection<T>::operator=(ComponentCollection&& rhs)
+inline DenseComponentStorage<T>&& DenseComponentStorage<T>::operator=(DenseComponentStorage&& rhs)
 {
     component_index_ = std::move(rhs.component_index_);
     components_      = std::move(rhs.components_);
 }
 
 template <typename T>
-inline bool ComponentCollection<T>::HasComponent(Entity entity) const
+inline bool DenseComponentStorage<T>::HasComponent(Entity entity) const
 {
     return component_index_.find(entity) != component_index_.cend();
 }
 
 template <typename T>
-inline T& ComponentCollection<T>::AddComponent(Entity entity)
+inline T& DenseComponentStorage<T>::AddComponent(Entity entity)
 {
     if (HasComponent(entity))
     {
@@ -131,25 +128,7 @@ inline T& ComponentCollection<T>::AddComponent(Entity entity)
 }
 
 template <typename T>
-inline ComponentIndex ComponentCollection<T>::CreateComponent()
-{
-    components_.emplace_back();
-    return components_.size() - 1;
-}
-
-template <typename T>
-inline void ComponentCollection<T>::SetComponent(Entity entity, ComponentIndex index)
-{
-    if (HasComponent(entity))
-    {
-        throw std::runtime_error("ComponentCollection: Entity already has a component");
-    }
-
-    component_index_[entity] = index;
-}
-
-template <typename T>
-inline const T& ComponentCollection<T>::GetComponent(Entity entity) const
+inline const T& DenseComponentStorage<T>::GetComponent(Entity entity) const
 {
     if (!HasComponent(entity))
     {
@@ -161,7 +140,7 @@ inline const T& ComponentCollection<T>::GetComponent(Entity entity) const
 }
 
 template <typename T>
-inline T& ComponentCollection<T>::GetComponent(Entity entity)
+inline T& DenseComponentStorage<T>::GetComponent(Entity entity)
 {
     if (!HasComponent(entity))
     {
@@ -173,7 +152,7 @@ inline T& ComponentCollection<T>::GetComponent(Entity entity)
 }
 
 template <typename T>
-inline void ComponentCollection<T>::RemoveComponent(Entity entity)
+inline void DenseComponentStorage<T>::RemoveComponent(Entity entity)
 {
     if (!HasComponent(entity))
     {
@@ -202,15 +181,14 @@ inline void ComponentCollection<T>::RemoveComponent(Entity entity)
 }
 
 template <typename T>
-inline T& ComponentCollection<T>::operator[](ComponentIndex index)
+inline T& DenseComponentStorage<T>::operator[](ComponentIndex index)
 {
     return components_[index];
 }
 
 template <typename T>
-inline const T& ComponentCollection<T>::operator[](ComponentIndex index) const
+inline const T& DenseComponentStorage<T>::operator[](ComponentIndex index) const
 {
     return components_[index];
 }
-
 }  // namespace yecs

@@ -33,7 +33,7 @@ SOFTWARE.
 
 #include "third_party/cpp-taskflow/taskflow/taskflow.hpp"
 #include "yecs/common.h"
-#include "yecs/component_collection.h"
+#include "yecs/component_storage.h"
 #include "yecs/component_types_builder.h"
 #include "yecs/entity_query.h"
 #include "yecs/entity_set.h"
@@ -151,10 +151,10 @@ private:
         std::unique_ptr<System> system;
     };
 
-    using ComponetsBase = ComponentCollectionBase;
+    using ComponetsBase = ComponentStorageBase;
     template <typename T>
-    using Components    = ComponentCollection<T>;
-    using ComponentsMap = std::unordered_map<std::type_index, std::unique_ptr<ComponentCollectionBase>>;
+    using Components    = DenseComponentStorage<T>;
+    using ComponentsMap = std::unordered_map<std::type_index, std::unique_ptr<ComponentStorageBase>>;
     using SystemsMap    = std::unordered_map<std::type_index, SystemInvoke>;
 
     // Entity array: true if entity exists, false if not.
@@ -179,10 +179,10 @@ class ComponentAccess
 {
 public:
     template <typename ComponentT>
-    ComponentCollection<ComponentT>& Write();
+    DenseComponentStorage<ComponentT>& Write();
 
     template <typename ComponentT>
-    const ComponentCollection<ComponentT>& Read() const;
+    const DenseComponentStorage<ComponentT>& Read() const;
 
 private:
     explicit ComponentAccess(World& world);
@@ -213,7 +213,7 @@ inline void World::RegisterComponent()
         throw std::runtime_error("World: component type already registered.");
     }
 
-    components_.emplace(index, std::make_unique<ComponentCollection<ComponentT>>());
+    components_.emplace(index, std::make_unique<DenseComponentStorage<ComponentT>>());
 }
 
 template <typename ComponentT>
@@ -285,13 +285,13 @@ inline World::EntityBuilder& World::EntityBuilder::AddComponent()
 inline ComponentAccess::ComponentAccess(World& world) : world_(world) {}
 
 template <typename ComponentT>
-inline ComponentCollection<ComponentT>& ComponentAccess::Write()
+inline DenseComponentStorage<ComponentT>& ComponentAccess::Write()
 {
     return world_.GetComponentCollection<ComponentT>();
 }
 
 template <typename ComponentT>
-inline const ComponentCollection<ComponentT>& ComponentAccess::Read() const
+inline const DenseComponentStorage<ComponentT>& ComponentAccess::Read() const
 {
     return world_.GetComponentCollection<ComponentT>();
 }

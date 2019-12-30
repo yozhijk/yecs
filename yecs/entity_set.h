@@ -42,6 +42,8 @@ public:
     EntitySet(const EntitySet&) = delete;
     EntitySet& operator=(const EntitySet&) = delete;
 
+    EntitySet(EntitySet&& rhs);
+
     // Filter a set of entities inplace.
     template <typename F>
     EntitySet& FilterInPlace(F&& f);
@@ -67,6 +69,8 @@ private:
 
     friend class EntityQuery;
 };
+
+inline EntitySet::EntitySet(EntitySet&& rhs) : entities_(std::move(rhs.entities_)) {}
 
 template <typename F>
 inline EntitySet& EntitySet::FilterInPlace(F&& f)

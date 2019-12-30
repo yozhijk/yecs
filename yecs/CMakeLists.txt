@@ -1,6 +1,6 @@
 add_library(yecs-lib STATIC
     common.h
-    component_collection.h
+    component_storage.h
     component_types_builder.h
     entity_set.h
     entity_query.h
