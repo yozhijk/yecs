@@ -1,0 +1,9 @@
+language: cpp
+compiler: g++
+
+before_script:
+  - mkdir build
+  - cmake -S . -B build
+  - cd build
+
+script: make -j4 && ./tests/tests
