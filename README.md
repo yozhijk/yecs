@@ -25,11 +25,13 @@ Simplistic C++17 entity-component-system engine
 
 # Build steps
 
-`git clone --recursive https://github.com/yozhijk/yecs.git yecs`
-`mkdir build`
-`cmake -S . -B build`
-`cd build`
-`make -j4`
+```
+git clone --recursive https://github.com/yozhijk/yecs.git yecs
+mkdir build
+cmake -S . -B build
+cd build
+make -j4
+```
 
 
 # Usage
