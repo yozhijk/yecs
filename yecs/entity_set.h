@@ -29,7 +29,7 @@ SOFTWARE.
 
 namespace yecs
 {
-/** \brief Represets a collection of entities and provides filtering operations.
+/** @brief Represets a collection of entities and provides filtering operations.
  *
  * EntitySet is primarily designed to be used as a result of entity queries for
  * systems. EntitySet provides and API to filter entities based on binary predicate.

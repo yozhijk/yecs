@@ -41,7 +41,8 @@ SOFTWARE.
 
 namespace yecs
 {
-/** \brief Provides primary ECS interface for clients.
+/**
+ * @brief Provides primary ECS interface for clients.
  *
  * World is a host for all ECS data and provides an interface to all ECS clients.
  * World is capable of:
@@ -53,7 +54,8 @@ namespace yecs
 class World
 {
 public:
-    /** \brief Helper class for easier entities construction.
+    /**
+     * @brief Helper class for easier entities construction.
      *
      * World returns entity builder as a result of CreateEntity method, which
      * conviniently allows to chain calls, like CreateEntity().AddComponent<Physics>().AddComponent<Graphics>().Build();
@@ -70,11 +72,11 @@ public:
         EntityBuilder& AddComponent();
 
         // Build entity (return its id).
-        Entity Build() const { return entity_; }
+        Entity Build() const noexcept { return entity_; }
 
     private:
         // Only World can create entity builders.
-        EntityBuilder(Entity entity, World& world) : entity_(entity), world_(world) {}
+        EntityBuilder(Entity entity, World& world) noexcept : entity_(entity), world_(world) {}
 
         // Entity of interest.
         Entity entity_ = kInvalidEntity;
@@ -88,21 +90,53 @@ public:
     World()  = default;
     ~World() = default;
 
-    /** \brief Register component type.
-     * An attempt to add a component of unregistered type to an entity leads to an exception being thrown.*/
+    /**
+     * @brief Register component type.
+     *
+     * An attempt to add a component of unregistered type to an entity leads to an exception being thrown.
+     *
+     * @tparam ComponentT The type of a component.
+     * @tparam StorageT Optional component storage type.
+     **/
     template <typename ComponentT, typename StorageT = DenseComponentStorage<ComponentT>>
     void RegisterComponent();
 
-    // Register a system.
+    /**
+     * @brief Register a system.
+     *
+     * Registering a system essentially mean adding it into a list of systems called by World.
+     * This internally creates an instance of a SystemT passing user supplied Args to its constructor.
+     * Systems are indexed by their type, meaning it is not possible to have two systems of the same type
+     * in the World.
+     *
+     * @tparam SystemT The type of a system.
+     * @tparam Args Constructor argument types.
+     *
+     * @param args Actual list of constructor arguments.
+     **/
     template <typename SystemT, typename... Args>
     void RegisterSystem(Args&&... args);
 
-    // Set system execution ordering: execute System0 before System1.
+    /**
+     * @brief Make one system to run before another one.
+     *
+     * By default systems can execute in arbitrary order (or even in parallel). Precede sets an order of system
+     * execution.
+     *
+     * @tparam SystemT0 The system to execute before SystemT1.
+     * @tparam SystemT1 The system to execute after SystemT0.
+     **/
     template <typename SystemT0, typename SystemT1>
     void Precede();
 
-    /** \brief Create new entity.
-     *  Method returns a builder instance, allowing to chain calls adding components.*/
+    /**
+     * @brief Create new entity.
+     *
+     * This method creates an empty entity and returns a builder instances which can be used to add components:
+     * world.CreateEntity().AddComponent<Velocity>().AddComponent<Mass>().Build().
+     *
+     * @return New EntityBuilder instances.
+     **/
     EntityBuilder CreateEntity();
 
     // Release all entity data.

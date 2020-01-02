@@ -30,7 +30,7 @@ SOFTWARE.
 
 namespace yecs
 {
-/** \brief Component storage interface.
+/** @brief Component storage interface.
  *
  * This class is mainly used for type erasure at this point, since DenseComponentStorage is
  * hardcoded in many places, but might be useful for different component implementations in the future.
@@ -50,7 +50,7 @@ public:
     virtual void RemoveComponent(Entity entity) = 0;
 };
 
-/** \brief Component storage storing entities in a dense array.
+/** @brief Component storage storing entities in a dense array.
  *
  * Components are stored in dense array and hash map is being used for entity to component mapping.
  **/

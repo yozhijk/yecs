@@ -4,7 +4,9 @@
 
 namespace yecs
 {
-/** \brief Helper class for easy type list building.
+/**
+ * @brief Helper class for easy type list building.
+ *
  * Access to components requires type list specification.
  * This class allows for easy type list building.
  **/
