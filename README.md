@@ -7,16 +7,19 @@ Simplistic C++17 entity-component-system engine
 
 ## System requirements
 ### Windows
-  - CMake 12.4 or later
-  - Visual Studio 2017 or later
+
+- CMake 12.4 or later
+- XCode
 
 ### OSX
-  - CMake 12.4 or later
-  - XCode
+
+- CMake 12.4 or later
+- XCode
 
 ### Linux
-  - CMake 12.4 or later
-  - GCC 7.3 or later
+
+- CMake 12.4 or later
+- GCC 7.3 or later
 
 ## Build steps
 ```sh
@@ -26,8 +29,6 @@ cmake -S . -B build
 cd build
 make -j4
 ```
-
-
 ## Usage
 To open a session, the user should create an instance of yecs::World, which provides majority of ECS client API.
 
@@ -112,8 +113,4 @@ A single step of a simulation (calling every system exactly once) is achieved us
 world.Run();
 ```
 
-Systems are executed in parallel wherever possible, but precedence constraints are fulfilled. 
-
-
-
-
+Systems are executed in parallel wherever possible, but precedence constraints are fulfilled.
