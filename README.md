@@ -7,16 +7,19 @@ Simplistic C++17 entity-component-system engine
 
 ## System requirements
 ### Windows
-  - CMake 12.4 or later
-  - Visual Studio 2017 or later
+
+- CMake 12.4 or later
+- XCode
 
 ### OSX
-  - CMake 12.4 or later
-  - XCode
+
+- CMake 12.4 or later
+- XCode
 
 ### Linux
-  - CMake 12.4 or later
-  - GCC 7.3 or later
+
+- CMake 12.4 or later
+- GCC 7.3 or later
 
 ## Build steps
 ```sh
