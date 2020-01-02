@@ -90,7 +90,7 @@ public:
 
     /** \brief Register component type.
      * An attempt to add a component of unregistered type to an entity leads to an exception being thrown.*/
-    template <typename ComponentT>
+    template <typename ComponentT, typename StorageT = DenseComponentStorage<ComponentT>>
     void RegisterComponent();
 
     // Register a system.
@@ -178,11 +178,11 @@ private:
 class ComponentAccess
 {
 public:
-    template <typename ComponentT>
-    DenseComponentStorage<ComponentT>& Write();
+    template <typename ComponentT, typename StorageT = DenseComponentStorage<ComponentT>>
+    StorageT& Write();
 
-    template <typename ComponentT>
-    const DenseComponentStorage<ComponentT>& Read() const;
+    template <typename ComponentT, typename StorageT = DenseComponentStorage<ComponentT>>
+    const StorageT& Read() const;
 
 private:
     explicit ComponentAccess(World& world);
@@ -202,7 +202,7 @@ inline auto& World::GetComponentCollection()
     return *collection;
 }
 
-template <typename ComponentT>
+template <typename ComponentT, typename StorageT>
 inline void World::RegisterComponent()
 {
     std::lock_guard<std::mutex> lock(component_mutex_);
@@ -213,7 +213,7 @@ inline void World::RegisterComponent()
         throw std::runtime_error("World: component type already registered.");
     }
 
-    components_.emplace(index, std::make_unique<DenseComponentStorage<ComponentT>>());
+    components_.emplace(index, std::make_unique<StorageT>());
 }
 
 template <typename ComponentT>
@@ -284,14 +284,14 @@ inline World::EntityBuilder& World::EntityBuilder::AddComponent()
 
 inline ComponentAccess::ComponentAccess(World& world) : world_(world) {}
 
-template <typename ComponentT>
-inline DenseComponentStorage<ComponentT>& ComponentAccess::Write()
+template <typename ComponentT, typename StorageT>
+inline StorageT& ComponentAccess::Write()
 {
     return world_.GetComponentCollection<ComponentT>();
 }
 
-template <typename ComponentT>
-inline const DenseComponentStorage<ComponentT>& ComponentAccess::Read() const
+template <typename ComponentT, typename StorageT>
+inline const StorageT& ComponentAccess::Read() const
 {
     return world_.GetComponentCollection<ComponentT>();
 }
