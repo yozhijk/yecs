@@ -1,31 +1,24 @@
 # yecs
-
 Simplistic C++17 entity-component-system engine
 
 ## Build status
-
 [![Build Status](https://travis-ci.org/yozhijk/yecs.svg?branch=master)](https://travis-ci.org/yozhijk/yecs)
 
 ## System requirements
-
 ### Windows
-
-- CMake 12.4 or later
-- Visual Studio 2017 or later
+  - CMake 12.4 or later
+  - Visual Studio 2017 or later
 
 ### OSX
-
-- CMake 12.4 or later
-- XCode
+  - CMake 12.4 or later
+  - XCode
 
 ### Linux
-
-- CMake 12.4 or later
-- GCC 7.3 or later
+  - CMake 12.4 or later
+  - GCC 7.3 or later
 
 ## Build steps
-
-```
+```sh
 git clone --recursive https://github.com/yozhijk/yecs.git yecs
 mkdir build
 cmake -S . -B build
@@ -35,7 +28,6 @@ make -j4
 
 
 ## Usage
-
 To open a session, the user should create an instance of yecs::World, which provides majority of ECS client API.
 
 Typical ECS worlflow has the following steps:
@@ -46,7 +38,6 @@ Typical ECS worlflow has the following steps:
 4) Run simulations
 
 ### Defining component types
-
 Components are registered in yecs::World using yecs::World::RegisterComponent<T>:
   
 ```c
@@ -71,7 +62,6 @@ world.RegisterComponent<Mass>());
 ```
 
 ### Creating entities
-
 Entities are creating via world.CreateEntity() call. This method returns a builder object allowing easy composition from multiple components:
   
 ```c
@@ -79,7 +69,6 @@ auto e = world.CreateEntity().AddComponent<Position>().AddComponent<Mass>().Buil
 ```
 
 ### Registering systems
-
 Systems are implemented by subclassing yecs::System interace. Systems can request read or write access to components in Run() method via ComponentAccess interace passed in. Entities can be queried and filtered using entity_query object:
 
 ```c
@@ -116,7 +105,6 @@ world.Precede<PhysicsSystem, RenderingSystem>();
 ```
 
 ### Running simulation
-
 A single step of a simulation (calling every system exactly once) is achieved using:
 
 ```c
