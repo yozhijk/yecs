@@ -110,8 +110,4 @@ A single step of a simulation (calling every system exactly once) is achieved us
 world.Run();
 ```
 
-Systems are executed in parallel wherever possible, but precedence constraints are fulfilled. 
-
-
-
-
+Systems are executed in parallel wherever possible, but precedence constraints are fulfilled.
