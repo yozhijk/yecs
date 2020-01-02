@@ -2,28 +2,28 @@
 
 Simplistic C++17 entity-component-system engine
 
-# Build status
+## Build status
 
 [![Build Status](https://travis-ci.org/yozhijk/yecs.svg?branch=master)](https://travis-ci.org/yozhijk/yecs)
 
-# System requirements
+## System requirements
 
-## Windows
+### Windows
 
 - CMake 12.4 or later
 - Visual Studio 2017 or later
 
-## OSX
+### OSX
 
 - CMake 12.4 or later
 - XCode
 
-## Linux
+### Linux
 
 - CMake 12.4 or later
 - GCC 7.3 or later
 
-# Build steps
+## Build steps
 
 ```
 git clone --recursive https://github.com/yozhijk/yecs.git yecs
@@ -34,7 +34,7 @@ make -j4
 ```
 
 
-# Usage
+## Usage
 
 To open a session, the user should create an instance of yecs::World, which provides majority of ECS client API.
 
@@ -45,7 +45,7 @@ Typical ECS worlflow has the following steps:
 3) Implement and register systems
 4) Run simulations
 
-## Defining component types
+### Defining component types
 
 Components are registered in yecs::World using yecs::World::RegisterComponent<T>:
   
@@ -70,7 +70,7 @@ world.RegisterComponent<Velocity>());
 world.RegisterComponent<Mass>());
 ```
 
-## Creating entities
+### Creating entities
 
 Entities are creating via world.CreateEntity() call. This method returns a builder object allowing easy composition from multiple components:
   
@@ -78,7 +78,7 @@ Entities are creating via world.CreateEntity() call. This method returns a build
 auto e = world.CreateEntity().AddComponent<Position>().AddComponent<Mass>().Build();
 ```
 
-## Registering systems
+### Registering systems
 
 Systems are implemented by subclassing yecs::System interace. Systems can request read or write access to components in Run() method via ComponentAccess interace passed in. Entities can be queried and filtered using entity_query object:
 
@@ -115,7 +115,7 @@ Systems are registered in the world using World::RegisterSystem<T>() method. If 
 world.Precede<PhysicsSystem, RenderingSystem>();
 ```
 
-## Running simulation
+### Running simulation
 
 A single step of a simulation (calling every system exactly once) is achieved using:
 
