@@ -209,18 +209,42 @@ private:
     friend class ComponentAccess;
 };
 
+/**
+ * @brief An interface providing access to components for System subclasses.
+ *
+ * ComponentAccess's single purpose is to serve as a medium between World and System subclasses,
+ * guarding world from unattended access.
+ **/
 class ComponentAccess
 {
 public:
+    /**
+     * @brief Request component storage for write access.
+     *
+     * @tparam ComponentT The type of the component needed.
+     * @tparam StorageT Optional storage type.
+     *
+     * @return Reference to component storage.
+     **/
     template <typename ComponentT, typename StorageT = DenseComponentStorage<ComponentT>>
     StorageT& Write();
 
+    /**
+     * @brief Request component storage for read access.
+     *
+     * @tparam ComponentT The type of the component needed.
+     * @tparam StorageT Optional storage type.
+     *
+     * @return Const reference to component storage.
+     **/
     template <typename ComponentT, typename StorageT = DenseComponentStorage<ComponentT>>
     const StorageT& Read() const;
 
 private:
-    explicit ComponentAccess(World& world);
+    // Only world can create these objects.
+    explicit ComponentAccess(World& world) noexcept;
 
+    // Reference to our world object.
     World& world_;
 
     friend class World;
@@ -316,7 +340,7 @@ inline World::EntityBuilder& World::EntityBuilder::AddComponent()
     return *this;
 }
 
-inline ComponentAccess::ComponentAccess(World& world) : world_(world) {}
+inline ComponentAccess::ComponentAccess(World& world) noexcept : world_(world) {}
 
 template <typename ComponentT, typename StorageT>
 inline StorageT& ComponentAccess::Write()

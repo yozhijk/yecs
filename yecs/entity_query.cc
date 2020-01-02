@@ -4,7 +4,7 @@
 
 namespace yecs
 {
-EntityQuery::EntityQuery(World& world) : world_(world) {}
+EntityQuery::EntityQuery(World& world) noexcept : world_(world) {}
 
 EntitySet EntityQuery::operator()() const
 {

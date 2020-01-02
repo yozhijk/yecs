@@ -30,13 +30,27 @@ namespace yecs
 class EntityQuery;
 class ComponentAccess;
 
+/**
+ * @brief API for system implementers.
+ *
+ * World talks to registered systems via System interface calling System::Run() on every
+ * registered system every time World::Run() is called.
+ **/
 class System
 {
 public:
+    // Dtor.
     virtual ~System() = default;
 
-    //  TODO: components access triggers a search in a components hash table every time
-    // Read or Write is called, collection refs cannot be cached atm, need to optimize.
+    /**
+     * @brief Run single step of system simulation.
+     *
+     * World calls this method once per World::Run invocation.
+     * TODO: components access triggers a search in a components hash table every time.
+     *
+     * @param access API for comoponent acccess.
+     * @param entity_query API for entity queries.
+     **/
     virtual void Run(ComponentAccess& access, EntityQuery& entity_query) = 0;
 };
 }  // namespace yecs

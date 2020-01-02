@@ -29,17 +29,33 @@ SOFTWARE.
 namespace yecs
 {
 class World;
+
+/**
+ * @brief An interface providing entity querying functionality to System subclasses.
+ *
+ * EntityQuery's single purpose is to serve as a medium between World and System subclasses,
+ * guarding world from unattended access.
+ **/
 class EntityQuery
 {
 public:
-    explicit EntityQuery(World& world);
+    explicit EntityQuery(World& world) noexcept;
 
+    // Do not allow copies.
     EntityQuery(const EntityQuery&) = delete;
     EntityQuery operator=(const EntityQuery&) = delete;
 
+    /**
+     * @brief Return an EntitySet containing all entities in the world.
+     *
+     * EntitySet further provides filtering functionlaity on its entities.
+     *
+     * @return EntitySet with all the entities in the world.
+     **/
     EntitySet operator()() const;
 
 private:
+    // Reference to our world object.
     World& world_;
 };
 }  // namespace yecs
