@@ -26,8 +26,6 @@ cmake -S . -B build
 cd build
 make -j4
 ```
-
-
 ## Usage
 To open a session, the user should create an instance of yecs::World, which provides majority of ECS client API.
 
