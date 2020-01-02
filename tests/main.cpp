@@ -7,16 +7,6 @@
 using namespace std;
 using namespace yecs;
 
-struct Position
-{
-    float x, y;
-};
-
-struct Velocity
-{
-    float x, y;
-};
-
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
