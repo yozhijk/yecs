@@ -9,7 +9,7 @@ Simplistic C++17 entity-component-system engine
 ### Windows
 
 - CMake 12.4 or later
-- XCode
+- Visual Studio 2017 or later
 
 ### OSX
 
