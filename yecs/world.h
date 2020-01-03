@@ -139,41 +139,125 @@ public:
      **/
     EntityBuilder CreateEntity();
 
-    // Release all entity data.
+    /**
+     * @brief Destroy an entity.
+     *
+     * Destroys an entity along with its components.
+     *
+     * @param entity Entity to destroy,
+     **/
     void DestroyEntity(Entity entity);
 
-    // Add component for an entity.
+    /**
+     * @brief Add component to an entity.
+     *
+     * Add component of a given type to an entity. A type should be registered in the World,
+     * otherwise std::runtime_error is being thrown.
+     *
+     * @tparam ComponentT Component type to add.
+     * @param entity Entity to add ComponentT component to.
+     *
+     * @return Ref to a component.
+     * @throw std::runtime_error
+     **/
     template <typename ComponentT>
     ComponentT& AddComponent(Entity entity);
 
+    /**
+     * @brief Get ref to a component of a given type.
+     *
+     * Get a ref to a component for an entity. A type should be registered in the World and
+     * an entity should have ComponentT component, otherwise std::runtime_error is being thrown.
+     *
+     * @tparam ComponentT Component type.
+     * @param entity Entity to get a component for.
+     *
+     * @return Ref to a component.
+     * @throw std::runtime_error
+     **/
     // Get component for an entity.
     template <typename ComponentT>
     ComponentT& GetComponent(Entity entity);
 
-    // Check if an entity has a component.
+    /**
+     * @brief Check if an entity has a component of a given type.
+     *
+     * Get a ref to a component for an entity. A type should be registered in the World and
+     * otherwise std::runtime_error is being thrown.
+     *
+     * @tparam ComponentT Component type.
+     * @param entity Entity to check a component for.
+     *
+     * @return true if entity has a component, false otherwise.
+     * @throw std::runtime_error
+     **/
     template <typename ComponentT>
     bool HasComponent(Entity entity) const;
 
-    // Get number of components of specified type.
+    /**
+     * @brief Get total number of components of a given type.
+     *
+     * A type should be registered in the World and otherwise std::runtime_error is being thrown.
+     *
+     * @tparam ComponentT Component type.
+     *
+     * @return Number of components of type ComponentT.
+     * @throw std::runtime_error
+     **/
     template <typename ComponentT>
     size_t GetNumComponents() const;
 
-    // Direct access to components.
+    /**
+     * @brief Get a ref to a component given its index.
+     *
+     * A type should be registered in the World and otherwise std::runtime_error is being thrown.
+     * index should be < than GetNumComponents<ComponentT>()
+     *
+     * @tparam ComponentT Component type.
+     *
+     * @return Ref to a component of type ComponentT at index.
+     * @throw std::runtime_error
+     **/
     template <typename ComponentT>
     ComponentT& GetComponentByIndex(ComponentIndex index);
 
+    /**
+     * @brief Get a const ref to a component given its index.
+     *
+     * A type should be registered in the World and otherwise std::runtime_error is being thrown.
+     * index should be < than GetNumComponents<ComponentT>()
+     *
+     * @tparam ComponentT Component type.
+     *
+     * @return Const ref to a component of type ComponentT at index.
+     * @throw std::runtime_error
+     **/
     template <typename ComponentT>
     const ComponentT& GetComponentByIndex(ComponentIndex index) const;
 
-    // Run systems.
+    /**
+     * @brief Run one step of a simulation.
+     *
+     * During one step of a simulation each registered system is called exactly once respecting execution order
+     * constratints specified by the user.
+     *
+     * @tparam ComponentT Component type.
+     *
+     * @throw std::runtime_error
+     **/
     void Run();
 
-    // Wipe out all the component and systems.
+    /**
+     * @brief Wipe out all the component and systems, return World to its initial state as if nothing
+     * has been registered and executed.
+     **/
     void Reset();
 
 private:
-    template <typename ComponentT>
-    auto& GetComponentCollection();
+    // Get reference to a component storage of a specified type.
+    // If type is not registered, throws std::runtime_error.
+    template <typename ComponentT, typename StorageT = DenseComponentStorage<ComponentT>>
+    StorageT& GetComponentStorage();
 
     // Each time entity space is out, we extend an array by this number of elements.
     static constexpr uint32_t kEntitySizeIncrement = 128;
@@ -185,9 +269,6 @@ private:
         std::unique_ptr<System> system;
     };
 
-    using ComponetsBase = ComponentStorageBase;
-    template <typename T>
-    using Components    = DenseComponentStorage<T>;
     using ComponentsMap = std::unordered_map<std::type_index, std::unique_ptr<ComponentStorageBase>>;
     using SystemsMap    = std::unordered_map<std::type_index, SystemInvoke>;
 
@@ -250,14 +331,14 @@ private:
     friend class World;
 };
 
-template <typename ComponentT>
-inline auto& World::GetComponentCollection()
+template <typename ComponentT, typename StorageT>
+inline StorageT& World::GetComponentStorage()
 {
     auto index = GetTypeIndex<ComponentT>();
     assert(components_.find(index) != components_.cend());
 
-    auto collection = static_cast<Components<ComponentT>*>(components_[index].get());
-    return *collection;
+    auto storage = static_cast<StorageT*>(components_[index].get());
+    return *storage;
 }
 
 template <typename ComponentT, typename StorageT>
@@ -279,32 +360,32 @@ inline ComponentT& World::AddComponent(Entity entity)
 {
     std::lock_guard<std::mutex> lock(component_mutex_);
 
-    return GetComponentCollection<ComponentT>().AddComponent(entity);
+    return GetComponentStorage<ComponentT>().AddComponent(entity);
 }
 
 template <typename ComponentT>
 inline ComponentT& World::GetComponent(Entity entity)
 {
-    return GetComponentCollection<ComponentT>().GetComponent(entity);
+    return GetComponentStorage<ComponentT>().GetComponent(entity);
 }
 
 // Direct component access.
 template <typename ComponentT>
 size_t World::GetNumComponents() const
 {
-    return GetComponentCollection<ComponentT>().size();
+    return GetComponentStorage<ComponentT>().size();
 }
 
 template <typename ComponentT>
 ComponentT& World::GetComponentByIndex(ComponentIndex i)
 {
-    return GetComponentCollection<ComponentT>()[i];
+    return GetComponentStorage<ComponentT>()[i];
 }
 
 template <typename ComponentT>
 const ComponentT& World::GetComponentByIndex(ComponentIndex i) const
 {
-    return GetComponentCollection<ComponentT>()[i];
+    return GetComponentStorage<ComponentT>()[i];
 }
 
 template <typename SystemT, typename... Args>
@@ -345,13 +426,13 @@ inline ComponentAccess::ComponentAccess(World& world) noexcept : world_(world) {
 template <typename ComponentT, typename StorageT>
 inline StorageT& ComponentAccess::Write()
 {
-    return world_.GetComponentCollection<ComponentT>();
+    return world_.GetComponentStorage<ComponentT>();
 }
 
 template <typename ComponentT, typename StorageT>
 inline const StorageT& ComponentAccess::Read() const
 {
-    return world_.GetComponentCollection<ComponentT>();
+    return world_.GetComponentStorage<ComponentT>();
 }
 
 template <typename SystemT0, typename SystemT1>

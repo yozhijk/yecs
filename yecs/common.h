@@ -36,10 +36,17 @@ constexpr std::uint32_t kInvalidEntity         = ~0u;
 
 using std::size_t;
 using std::uint32_t;
+
 using Entity         = uint32_t;
 using ComponentIndex = size_t;
 using ComponentTypes = std::vector<std::type_index>;
 
+/**
+ * @brief Calculate hasheable index given a type.
+ *
+ * @tparam The type user wants a hasheable index for.
+ * @return std::type_index which can be used in hash maps.
+ **/
 template <typename T>
 inline auto GetTypeIndex()
 {
