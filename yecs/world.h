@@ -33,10 +33,14 @@ SOFTWARE.
 
 // Disable warning as error for VS2019 build, taskflow has mutliple type conversion producing warning.
 // As of Jan 4 2020, there is a pending pull request for that: https://github.com/cpp-taskflow/cpp-taskflow/pull/135
+#ifdef _WIN32
 #pragma warning(push)
 #pragma warning(disable : 4267)
+#endif
 #include "third_party/cpp-taskflow/taskflow/taskflow.hpp"
+#ifdef _WIN32
 #pragma warning(pop)
+#endif
 
 #include "yecs/common.h"
 #include "yecs/component_storage.h"
