@@ -31,7 +31,13 @@ SOFTWARE.
 #include <unordered_map>
 #include <vector>
 
+// Disable warning as error for VS2019 build, taskflow has mutliple type conversion producing warning.
+// As of Jan 4 2020, there is a pending pull request for that: https://github.com/cpp-taskflow/cpp-taskflow/pull/135
+#pragma warning(push)
+#pragma warning(disable : 4267)
 #include "third_party/cpp-taskflow/taskflow/taskflow.hpp"
+#pragma warning(pop)
+
 #include "yecs/common.h"
 #include "yecs/component_storage.h"
 #include "yecs/component_types_builder.h"

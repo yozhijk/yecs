@@ -26,7 +26,7 @@ World::EntityBuilder World::CreateEntity()
     {
         if (!entities_[i])
         {
-            id = i;
+            id = static_cast<Entity>(i);
         }
     }
 
@@ -35,7 +35,7 @@ World::EntityBuilder World::CreateEntity()
     {
         // Add one entity at the end.
         auto old_size = entities_.size();
-        id            = old_size;
+        id            = static_cast<Entity>(old_size);
 
         // Set added elements to false (no entity).
         entities_.resize(old_size + kEntitySizeIncrement);
