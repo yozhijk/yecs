@@ -414,11 +414,10 @@ inline void World::RegisterSystem(Args&&... args)
 
     SystemInvoke invoke;
     invoke.system = std::make_unique<SystemT>(std::forward<Args>(args)...);
-    invoke.task   = taskflow_.emplace([system = invoke.system.get(), this]() {
+    invoke.task   = taskflow_.emplace([system = invoke.system.get(), this](tf::Subflow& subflow) {
         ComponentAccess access(*this);
         EntityQuery     query(*this);
-
-        system->Run(access, query);
+        system->Run(access, query, subflow);
     });
 
     systems_.emplace(index, std::move(invoke));

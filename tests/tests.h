@@ -187,7 +187,7 @@ TEST_F(Test, RegisterSystem)
 
     struct TestSystem : public System
     {
-        void Run(ComponentAccess& access, EntityQuery& entity_query) override {}
+        void Run(ComponentAccess& access, EntityQuery& entity_query, tf::Subflow& subflow) override {}
     };
 
     ASSERT_NO_THROW(world.RegisterSystem<TestSystem>());
@@ -219,7 +219,7 @@ TEST_F(Test, RegisterSameTypeSystems)
 
     struct TestSystem : public System
     {
-        void Run(ComponentAccess& access, EntityQuery& entity_query) override {}
+        void Run(ComponentAccess& access, EntityQuery& entity_query, tf::Subflow& subflow) override {}
     };
 
     ASSERT_NO_THROW(world.RegisterSystem<TestSystem>());
@@ -256,7 +256,7 @@ TEST_F(Test, CountEntitiesSystem)
             : pos_count_(pos_count), vel_count_(vel_count)
         {
         }
-        void Run(ComponentAccess& access, EntityQuery& entity_query) override
+        void Run(ComponentAccess& access, EntityQuery& entity_query, tf::Subflow& subflow) override
         {
             auto& positions  = access.Read<Position>();
             auto& velocities = access.Read<Velocity>();
@@ -322,7 +322,7 @@ TEST_F(Test, SimplePhysicsSystem)
 
     struct PhysicsSystem : public System
     {
-        void Run(ComponentAccess& access, EntityQuery& entity_query) override
+        void Run(ComponentAccess& access, EntityQuery& entity_query, tf::Subflow& subflow) override
         {
             auto& positions  = access.Write<Position>();
             auto& velocities = access.Read<Velocity>();
