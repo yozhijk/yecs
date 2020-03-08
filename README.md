@@ -2,7 +2,8 @@
 Simplistic C++17 entity-component-system engine
 
 ## Build status
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/fb3240c085bb4916bbd27cd3b426c0ac)](https://www.codacy.com/manual/yozhijk/capsaicin?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=yozhijk/capsaicin&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/yozhijk/yecs.svg?branch=master)](https://travis-ci.org/yozhijk/yecs)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/426af3d9a71f4dffabf777dfccdf2f0a)](https://www.codacy.com/manual/yozhijk/yecs?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=yozhijk/yecs&amp;utm_campaign=Badge_Grade)
 
 ## System requirements
 ### Windows
