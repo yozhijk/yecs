@@ -28,11 +28,8 @@ add_subdirectory(yecs)
 
 if (ENABLE_TESTING)
     add_subdirectory(tests)
-
     set(gtest_force_shared_crt ON CACHE BOOL "Use /MD and /MDd" FORCE)
     add_subdirectory(third_party/gtest)
-    set(TF_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(TF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(THIRD_PARTY_TARGETS
         gtest
         gtest_main
@@ -44,6 +41,8 @@ if (ENABLE_TESTING)
     endforeach()
 endif()
 
+set(TF_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(TF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/cpp-taskflow)
 
 
