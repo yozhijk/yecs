@@ -23,10 +23,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Allow IDE's to group targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-option(ENABLE_TESTING "Enable unit tests" ON)
+option(YECS_ENABLE_TESTING "Enable unit tests" ON)
 add_subdirectory(yecs)
 
-if (ENABLE_TESTING)
+if (YECS_ENABLE_TESTING)
     add_subdirectory(tests)
     set(gtest_force_shared_crt ON CACHE BOOL "Use /MD and /MDd" FORCE)
     add_subdirectory(third_party/gtest)
