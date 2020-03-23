@@ -13,12 +13,7 @@ add_library(yecs-lib STATIC
 
 target_compile_features(yecs-lib PRIVATE cxx_std_17)
 
-target_include_directories(yecs-lib
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}
-    PUBLIC
-        ${PROJECT_SOURCE_DIR}/yecs
-)
+target_include_directories(yecs-lib PUBLIC ${PROJECT_SOURCE_DIR})
 
 if(WIN32)
     target_compile_options(yecs-lib PRIVATE /WX)
