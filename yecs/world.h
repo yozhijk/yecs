@@ -456,6 +456,6 @@ inline void World::Precede()
         throw std::runtime_error("World: system type not found");
     }
 
-    system0.second.task.Precede(system1.second.task);
+    system0->second.task.precede(system1->second.task);
 }
 }  // namespace yecs
