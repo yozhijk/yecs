@@ -410,8 +410,6 @@ inline void World::RegisterSystem(Args&&... args)
         throw std::runtime_error("World: system type already registered");
     }
 
-    auto system = std::make_unique<SystemT>(std::forward<Args>(args)...);
-
     SystemInvoke invoke;
     invoke.system = std::make_unique<SystemT>(std::forward<Args>(args)...);
     invoke.task   = taskflow_.emplace([system = invoke.system.get(), this](tf::Subflow& subflow) {
