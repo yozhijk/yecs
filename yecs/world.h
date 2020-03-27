@@ -263,6 +263,12 @@ public:
      **/
     void Reset();
 
+    /**
+     * @brief Get a reference to a system.
+     **/
+    template <typename SystemT>
+    SystemT& GetSystem();
+
 private:
     // Get reference to a component storage of a specified type.
     // If type is not registered, throws std::runtime_error.
@@ -440,6 +446,21 @@ template <typename ComponentT, typename StorageT>
 inline const StorageT& ComponentAccess::Read() const
 {
     return world_.GetComponentStorage<ComponentT>();
+}
+
+template <typename SystemT>
+inline SystemT& World::GetSystem()
+{
+    auto index = GetTypeIndex<SystemT>();
+
+    auto system = systems_.find(index);
+
+    if (system == systems_.cend())
+    {
+        throw std::runtime_error("World: system type not found");
+    }
+
+    return reinterpret_cast<SystemT&>(*system->second.system.get());
 }
 
 template <typename SystemT0, typename SystemT1>
