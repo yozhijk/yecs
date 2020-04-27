@@ -27,6 +27,7 @@ World::EntityBuilder World::CreateEntity()
         if (!entities_[i])
         {
             id = static_cast<Entity>(i);
+            break;
         }
     }
 
